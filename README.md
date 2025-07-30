@@ -1,0 +1,177 @@
+# qwen-lora-windows-guide
+🧠 Train Your Own LoRA on Qwen 0.6B in Under a Day (Windows, 8GB+ VRAM)
+
+This is a beginner-friendly Windows guide to fine-tune Qwen 0.6B with LoRA using the Alpaca dataset. Works on consumer GPUs like RTX 2060, 3060, or 3080 Ti.
+
+📁 Step 1: Download the Base Model
+
+Go to: https://huggingface.co/Qwen/Qwen-0.6B-Base
+
+Download these files manually:
+
+config.json
+
+generation_config.json
+
+model.safetensors or pytorch_model.bin
+
+tokenizer_config.json
+
+tokenizer.model
+
+special_tokens_map.json
+
+Place them in:
+
+D:\AI\models\Qwen-0.6B-Base
+
+(Or any path of your choice)
+
+📦 Step 2: Install Dependencies (Windows)
+
+Make sure you're using Python 3.10 or 3.11 (Python 3.12 is not fully compatible).
+
+Run these in Command Prompt or PowerShell:
+
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+pip install transformers datasets accelerate bitsandbytes einops scipy peft
+
+If you hit an error about bitsandbytes on Windows, skip it or try this Windows port workaround.
+
+📚 Step 3: Download the Alpaca Dataset
+
+Save the JSON file from:
+https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json
+
+Place it in:
+
+D:\AI\data\alpaca_data.json
+
+🔬 Step 4: Fine-Tuning Script (fine_tune_qwen.py)
+
+Create a new Python script named fine_tune_qwen.py with this content:
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer, DataCollatorForLanguageModeling
+from peft import get_peft_model, LoraConfig, TaskType
+from datasets import load_dataset
+import torch
+
+model_name = "D:/AI/models/Qwen-0.6B-Base"
+tokenizer = AutoTokenizer.from_pretrained(model_name, local_files_only=True)
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    device_map="auto",
+    load_in_4bit=True,
+    torch_dtype=torch.float16,
+    local_files_only=True
+)
+
+peft_config = LoraConfig(
+    r=8,
+    lora_alpha=16,
+    target_modules=["c_attn", "q_proj", "v_proj", "k_proj"],
+    lora_dropout=0.1,
+    bias="none",
+    task_type=TaskType.CAUSAL_LM
+)
+
+model = get_peft_model(model, peft_config)
+
+dataset = load_dataset("json", data_files="D:/AI/data/alpaca_data.json")
+
+def format(example):
+    return {
+        "input_ids": tokenizer(
+            f"### Instruction:\n{example['instruction']}\n\n### Input:\n{example['input']}\n\n### Response:\n",
+            truncation=True, padding="max_length", max_length=512, return_tensors="pt"
+        )["input_ids"][0]
+    }
+
+dataset = dataset["train"].map(format)
+
+training_args = TrainingArguments(
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=4,
+    num_train_epochs=2,
+    learning_rate=2e-4,
+    fp16=True,
+    output_dir="D:/AI/qwen_lora_output",
+    logging_steps=10,
+    save_strategy="epoch",
+    optim="paged_adamw_8bit"
+)
+
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset,
+    tokenizer=tokenizer,
+    data_collator=data_collator
+)
+
+trainer.train()
+
+🚀 Step 5: Run the Training
+
+Open your terminal or VS Code and run:
+
+python fine_tune_qwen.py
+
+The adapter will be saved in:
+
+D:\AI\qwen_lora_output
+
+🧰 Step 6: Inference Script (run_qwen_lora.py)
+
+To test your LoRA model, create run_qwen_lora.py:
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from peft import PeftModel
+import torch
+
+base_model = "D:/AI/models/Qwen-0.6B-Base"
+lora_model = "D:/AI/qwen_lora_output"
+
+tokenizer = AutoTokenizer.from_pretrained(base_model, local_files_only=True)
+model = AutoModelForCausalLM.from_pretrained(
+    base_model,
+    load_in_4bit=True,
+    device_map="auto",
+    torch_dtype=torch.float16,
+    local_files_only=True
+)
+model = PeftModel.from_pretrained(model, lora_model)
+
+prompt = "### Instruction:\nTell me a joke about programmers.\n\n### Input:\n\n### Response:\n"
+
+inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+generation_config = GenerationConfig(
+    max_new_tokens=100,
+    temperature=0.7,
+    top_p=0.9,
+    do_sample=True
+)
+
+with torch.no_grad():
+    output = model.generate(**inputs, generation_config=generation_config)
+    print(tokenizer.decode(output[0], skip_special_tokens=True))
+
+Then run:
+
+python run_qwen_lora.py
+
+🤔 Final Notes
+
+Reduce VRAM usage by lowering max_length and batch sizes
+
+You can use your own dataset in Alpaca format
+
+For 4-bit quantization to work, make sure bitsandbytes installs cleanly (or skip for full precision)
+
+Optional: You can convert to GGUF for use in llama.cpp if you want CPU inference.
+
+Let me know if you want a one-click zip package or GUI wrapper!
+
