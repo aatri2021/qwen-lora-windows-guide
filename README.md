@@ -47,7 +47,7 @@ python trainllmlora.py
 
 Download runllmlora.py(in this repo - see link above) , modify paths in it to yours.
 
-python run_qwen_lora.py
+python runllmlora.py
 
 🤔 Final Notes
 
