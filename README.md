@@ -19,8 +19,6 @@ pip install torch --index-url https://download.pytorch.org/whl/cu121
 
 pip install transformers datasets accelerate bitsandbytes einops scipy peft
 
-If you hit an error about bitsandbytes on Windows, skip it or try this Windows port workaround.
-
 📚 Step 3: Download the Alpaca Dataset
 
 Save the JSON file from:
