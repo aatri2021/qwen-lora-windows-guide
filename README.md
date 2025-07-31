@@ -16,6 +16,7 @@ Make sure you're using Python 3.10 or 3.11 (Python 3.12 is not fully compatible)
 Run these in Command Prompt or PowerShell:
 
 pip install torch --index-url https://download.pytorch.org/whl/cu121
+
 pip install transformers datasets accelerate bitsandbytes einops scipy peft
 
 If you hit an error about bitsandbytes on Windows, skip it or try this Windows port workaround.
