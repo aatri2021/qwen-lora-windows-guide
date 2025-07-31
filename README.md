@@ -41,7 +41,7 @@ Save the JSON file from:
 https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json
 
 
-🔬 Step 4: Fine-Tuning Script (fine_tune_qwen.py)
+🔬 Step 4: Fine-Tuning Script (trainllmlora.py)
 
 Download the file trainllmlora.py and modify dir paths to your downloads.
 
@@ -51,54 +51,14 @@ Open your terminal or VS Code and run:
 
 python trainllmlora.py
 
-🧰 Step 6: Inference Script (run_qwen_lora.py)
+🧰 Step 6: Inference Script (runllmlora.py)
 
-To test your LoRA model, create run_qwen_lora.py:
-
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
-from peft import PeftModel
-import torch
-
-base_model = "D:/AI/models/Qwen-0.6B-Base"
-lora_model = "D:/AI/qwen_lora_output"
-
-tokenizer = AutoTokenizer.from_pretrained(base_model, local_files_only=True)
-model = AutoModelForCausalLM.from_pretrained(
-    base_model,
-    load_in_4bit=True,
-    device_map="auto",
-    torch_dtype=torch.float16,
-    local_files_only=True
-)
-model = PeftModel.from_pretrained(model, lora_model)
-
-prompt = "### Instruction:\nTell me a joke about programmers.\n\n### Input:\n\n### Response:\n"
-
-inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-generation_config = GenerationConfig(
-    max_new_tokens=100,
-    temperature=0.7,
-    top_p=0.9,
-    do_sample=True
-)
-
-with torch.no_grad():
-    output = model.generate(**inputs, generation_config=generation_config)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-
-Then run:
+Download runllmlora.py, modify dirs in it to yours.
 
 python run_qwen_lora.py
 
 🤔 Final Notes
 
-Reduce VRAM usage by lowering max_length and batch sizes
+Reduce VRAM usage by lowering max_length and batch sizes, try smaller quant values in the bitsnbytes config
 
 You can use your own dataset in Alpaca format
-
-For 4-bit quantization to work, make sure bitsandbytes installs cleanly (or skip for full precision)
-
-Optional: You can convert to GGUF for use in llama.cpp if you want CPU inference.
-
-Let me know if you want a one-click zip package or GUI wrapper!
-
