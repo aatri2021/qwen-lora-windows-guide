@@ -9,9 +9,6 @@ Go to: (https://huggingface.co/Qwen/Qwen3-0.6B-Base/tree/main)
 
 Download the files manually or use huggingface's download manager.
 
-
-(Or any path of your choice)
-
 📦 Step 2: Install Dependencies (Windows)
 
 Make sure you're using Python 3.10 or 3.11 (Python 3.12 is not fully compatible).
