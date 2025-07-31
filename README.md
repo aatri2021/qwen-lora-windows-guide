@@ -7,7 +7,8 @@ This is a beginner-friendly Windows guide to fine-tune Qwen 0.6B with LoRA using
 
 Go to: (https://huggingface.co/Qwen/Qwen3-0.6B-Base/tree/main)
 
-Download the files manually or use huggingface's download manager, place them in a folder named Qwen3-0.6B-Base. Remember its location.
+Download the files manually or use huggingface's download manager. Place all files into a folder named Qwen3-0.6B-Base somewhere on your drive.
+You’ll need to update your script paths to point to this folder.
 
 📦 Step 2: Install Dependencies (Windows)
 
