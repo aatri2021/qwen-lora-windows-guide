@@ -40,9 +40,6 @@ If you hit an error about bitsandbytes on Windows, skip it or try this Windows p
 Save the JSON file from:
 https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json
 
-Place it in:
-
-D:\AI\data\alpaca_data.json
 
 🔬 Step 4: Fine-Tuning Script (fine_tune_qwen.py)
 
@@ -52,11 +49,7 @@ Download the file trainllmlora.py and modify dir paths to your downloads.
 
 Open your terminal or VS Code and run:
 
-python fine_tune_qwen.py
-
-The adapter will be saved in:
-
-D:\AI\qwen_lora_output
+python trainllmlora.py
 
 🧰 Step 6: Inference Script (run_qwen_lora.py)
 
