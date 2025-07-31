@@ -3,14 +3,14 @@
 
 This is a beginner-friendly Windows guide to fine-tune Qwen 0.6B with LoRA using the Alpaca dataset. Works on consumer GPUs like RTX 2060, 3060, or 3080 Ti.
 
-📁 Step 1: Download the Base Model
+📁 **Step 1: Download the Base Model**
 
 Go to: (https://huggingface.co/Qwen/Qwen3-0.6B-Base/tree/main)
 
 Download the files manually or use huggingface's download manager. Place all files into a folder named Qwen3-0.6B-Base somewhere on your drive.
 You’ll need to update your script paths to point to this folder.
 
-📦 Step 2: Install Dependencies (Windows)
+📦 **Step 2: Install Dependencies (Windows)**
 
 Make sure you're using Python 3.10 or 3.11 (Python 3.12 is not fully compatible).
 
@@ -20,13 +20,13 @@ py -m pip install torch --index-url https://download.pytorch.org/whl/cu121
 
 py -m pip install transformers datasets accelerate bitsandbytes einops scipy peft
 
-📚 Step 3: Download the Alpaca Dataset
+📚 **Step 3: Download the Alpaca Dataset**
 
 Save the JSON file from:
 https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json
 
 
-🔬 Step 4: Fine-Tuning Script (trainllmlora.py)
+🔬 **Step 4: Fine-Tuning Script (trainllmlora.py)**
 
 Download trainllmlora.py (in this repo - see link above) and update the file paths to match where you put your models and alpaca files.
 
@@ -36,13 +36,13 @@ Download trainllmlora.py (in this repo - see link above) and update the file pat
  
  alpaca_json_path = "D:/AI/data/alpaca.json"
 
-🚀 Step 5: Run the Training
+🚀 **Step 5: Run the Training**
 
 Open your terminal or VS Code and run:
 
 python trainllmlora.py
 
-🧰 Step 6: Inference Script (runllmlora.py)
+🧰 **Step 6: Inference Script (runllmlora.py)**
 
 Download runllmlora.py(in this repo - see link above) , modify paths in it to yours.
 
