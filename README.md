@@ -21,9 +21,6 @@ tokenizer.model
 
 special_tokens_map.json
 
-Place them in:
-
-D:\AI\models\Qwen-0.6B-Base
 
 (Or any path of your choice)
 
