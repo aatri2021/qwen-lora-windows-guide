@@ -31,7 +31,9 @@ https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.jso
 Download trainllmlora.py (in this repo - see link above) and update the file paths to match where you put your models and alpaca files.
 
 base_model_dir = "./Qwen3-0.6B-Base"
+
 dataset_path = "./alpaca_data.json"
+
 output_dir = "./qwen_lora_output"
 
 🚀 Step 5: Run the Training
