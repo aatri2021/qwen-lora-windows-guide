@@ -5,21 +5,9 @@ This is a beginner-friendly Windows guide to fine-tune Qwen 0.6B with LoRA using
 
 📁 Step 1: Download the Base Model
 
-Go to: [https://huggingface.co/Qwen/Qwen-0.6B-Base](https://huggingface.co/Qwen/Qwen3-0.6B-Base)
+Go to: [[https://huggingface.co/Qwen/Qwen-0.6B-Base](https://huggingface.co/Qwen/Qwen3-0.6B-Base)](https://huggingface.co/Qwen/Qwen3-0.6B-Base/tree/main)
 
-Download these files manually:
-
-config.json
-
-generation_config.json
-
-model.safetensors or pytorch_model.bin
-
-tokenizer_config.json
-
-tokenizer.model
-
-special_tokens_map.json
+Download the files manually or use huggingface's download manager.
 
 
 (Or any path of your choice)
