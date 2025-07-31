@@ -27,7 +27,15 @@ https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.jso
 
 🔬 Step 4: Fine-Tuning Script (trainllmlora.py)
 
-Download the file trainllmlora.py and modify dir paths to your downloads.
+Download trainllmlora.py and update the file paths to match your setup.
+
+Make sure the script loads:
+
+The base Qwen model
+
+The Alpaca dataset
+
+Your chosen output directory for saving the LoRA adapter
 
 🚀 Step 5: Run the Training
 
@@ -37,7 +45,7 @@ python trainllmlora.py
 
 🧰 Step 6: Inference Script (runllmlora.py)
 
-Download runllmlora.py, modify dirs in it to yours.
+Download runllmlora.py, modify paths in it to yours.
 
 python run_qwen_lora.py
 
