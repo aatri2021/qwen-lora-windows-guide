@@ -5,7 +5,7 @@ This is a beginner-friendly Windows guide to fine-tune Qwen 0.6B with LoRA using
 
 📁 Step 1: Download the Base Model
 
-Go to: https://huggingface.co/Qwen/Qwen-0.6B-Base
+Go to: [https://huggingface.co/Qwen/Qwen-0.6B-Base](https://huggingface.co/Qwen/Qwen3-0.6B-Base)
 
 Download these files manually:
 
