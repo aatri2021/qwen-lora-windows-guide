@@ -18,7 +18,8 @@ Run these in Command Prompt or PowerShell:
 
 py -m pip install torch --index-url https://download.pytorch.org/whl/cu121
 
-py -m pip install transformers datasets accelerate bitsandbytes einops scipy peft
+py -m pip install transformers peft bitsandbytes
+
 
 📚 **Step 3: Download the Alpaca Dataset**
 
