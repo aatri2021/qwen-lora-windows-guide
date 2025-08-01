@@ -1,70 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Chat with Qwen3-0.6B</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; max-width: 700px; }
-  textarea { width: 100%; height: 100px; font-family: monospace; font-size: 14px; }
-  #response { white-space: pre-wrap; margin-top: 20px; background: #f0f0f0; padding: 10px; border-radius: 5px; }
-  button { margin-top: 10px; padding: 8px 15px; font-size: 16px; }
-</style>
-</head>
-<body>
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig
+from peft import PeftModel
+import torch
 
-<h2>Ask Qwen3-0.6B Model</h2>
+# Paths
+base_model = "./Qwen3-0.6B-Base/models--Qwen--Qwen3-0.6B-Base/snapshots/da87bfb608c14b7cf20ba1ce41287e8de496c0cd"
+lora_model = "./Qwen3-0.6B-LoRA-Alpaca"
 
-<textarea id="inputText" placeholder="Type your instruction here..."></textarea><br />
-<button id="sendBtn">Send</button>
+# Toggle quantization here:
+use_quantized = False  # Set True to enable 4-bit quantized loading, False for 16-bit fp16
 
-<div id="response"></div>
+if use_quantized:
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+    )
+    model_kwargs = {
+        "quantization_config": bnb_config,
+        "trust_remote_code": True,
+        "device_map": "auto",
+        "local_files_only": True,
+    }
+else:
+    model_kwargs = {
+        "torch_dtype": torch.float16,
+        "trust_remote_code": True,
+        "device_map": "auto",
+        "local_files_only": True,
+    }
 
-<script>
-async function sendChatCompletion(userInput) {
-  const messages = [
-    { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: userInput }
-  ];
+# Load tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True, local_files_only=True)
+model = AutoModelForCausalLM.from_pretrained(base_model, **model_kwargs)
 
-  const response = await fetch("http://localhost:8000/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "/home/anuj/models/Qwen3-0.6B-Base/models--Qwen--Qwen3-0.6B-Base/snapshots/da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
-      messages: messages,
-      max_tokens: 5000,
-      temperature: 0.3,
-      top_p: 0.9
-    })
-  });
+# Load LoRA adapter
+model = PeftModel.from_pretrained(model, lora_model)
+model.eval()
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`HTTP error ${response.status}: ${errorText}`);
-  }
+# Qwen-Base style prompt (no <|im_start|>, plain instruction prompt)
+prompt = (
+    "### Instruction:\nWhat is the capital of France?\n\n### Response:\n"
+)
 
-  const data = await response.json();
-  return data.choices[0].message.content;
-}
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
-document.getElementById("sendBtn").addEventListener("click", async () => {
-  const inputText = document.getElementById("inputText").value.trim();
-  if (!inputText) {
-    alert("Please enter an instruction.");
-    return;
-  }
+# Generation config
+generation_config = GenerationConfig(
+    max_new_tokens=2000,
+    temperature=0.7,
+    top_p=0.9,
+    do_sample=True,
+    pad_token_id=tokenizer.eos_token_id,  # Needed for Qwen to avoid warning
+    eos_token_id=tokenizer.eos_token_id,
+)
 
-  const responseDiv = document.getElementById("response");
-  responseDiv.textContent = "Loading...";
+# Generate
+with torch.no_grad():
+    outputs = model.generate(
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
+        generation_config=generation_config,
+    )
 
-  try {
-    const answer = await sendChatCompletion(inputText);
-    responseDiv.textContent = answer;
-  } catch (error) {
-    responseDiv.textContent = "Error: " + error.message;
-  }
-});
-</script>
-
-</body>
-</html>
+# Decode and print result, skipping special tokens
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
