@@ -25,15 +25,15 @@ def load_alpaca_data(filepath, start, limit=None):
         input_text = entry["input"].strip()
         output = entry["output"].strip()
 
-        user_prompt = instruction if input_text == "" else f"{instruction}\n{input_text}"
-    
-        prompt = (
-            "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n"
-            f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
-            "<|im_start|>assistant\n"
-        )
+        if input_text == "":
+            prompt = (
+                f"### Instruction:\n{instruction}\n\n### Response:\n"
+            )
+        else:
+            prompt = (
+                f"### Instruction:\n{instruction}\n\n### Input:\n{input_text}\n\n### Response:\n"
+            )
         return prompt, output
-
 
     sliced_data = alpaca_data[start:start + limit] if limit else alpaca_data[start:]
     data = [format_entry(entry) for entry in sliced_data]
@@ -46,7 +46,6 @@ def load_model_and_tokenizer(model_id, device, lora_adapter_path, lora_config):
 
     # Make sure padding is valid for Qwen
     tokenizer.pad_token = tokenizer.eos_token
-
 
     # Flag: switch between 16-bit and quantized loading
     use_quantized = False  # Set True for 4-bit/8-bit quant, False for fp16 full precision
@@ -114,7 +113,8 @@ def train_loop(model, tokenizer, training_data, device, batch_size, num_epochs, 
 
             prompts = [p for p, _ in batch]
             answers = [a for _, a in batch]
-            full_texts = [f"{p}{a}<|im_end|>" for p, a in zip(prompts, answers)]
+            # Combine prompt + answer + EOS token
+            full_texts = [f"{p}{a}<|endoftext|>" for p, a in zip(prompts, answers)]
 
             encodings = tokenizer(
                 full_texts,
@@ -129,7 +129,7 @@ def train_loop(model, tokenizer, training_data, device, batch_size, num_epochs, 
 
             labels = input_ids.clone()
             for idx, (prompt, _) in enumerate(batch):
-                prompt_tokens = tokenizer(f"{prompt}", add_special_tokens=False)["input_ids"]
+                prompt_tokens = tokenizer(prompt, add_special_tokens=False)["input_ids"]
                 labels[idx, :len(prompt_tokens)] = -100  # mask prompt part
 
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
@@ -182,7 +182,7 @@ def main():
     num_epochs = 3
     
     learning_rate = 3e-5
-    data_limit = 10
+    data_limit = 1000
     start = 0
 
     lora_config = LoraConfig(
