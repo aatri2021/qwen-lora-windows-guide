@@ -4,7 +4,7 @@ import os
 import torch
 from torch.optim import AdamW
 from peft import PeftModel, LoraConfig, get_peft_model
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 def load_alpaca_data(filepath, start, limit=None):
     with open(filepath, "r", encoding="utf-8") as f:
@@ -21,12 +21,13 @@ def load_alpaca_data(filepath, start, limit=None):
         print(f"Limit adjusted to {limit} to avoid going past dataset end.")
 
     def format_entry(entry):
-        if entry["input"].strip():
-            prompt = f"{entry['instruction']}\n{entry['input']}"
-        else:
-            prompt = entry["instruction"]
-        answer = entry["output"]
-        return prompt, answer
+        instruction = entry["instruction"].strip()
+        input_text = entry["input"].strip()
+        output = entry["output"].strip()
+
+        prompt = f"### Instruction:\n{instruction}\n\n### Input:\n{input_text}\n\n### Response:"
+        return prompt, output
+
 
     sliced_data = alpaca_data[start:start + limit] if limit else alpaca_data[start:]
     data = [format_entry(entry) for entry in sliced_data]
@@ -42,13 +43,32 @@ def load_model_and_tokenizer(model_id, device, lora_adapter_path, lora_config):
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
-    base_model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        load_in_8bit=True,
-        torch_dtype=torch.float16,
-        device_map={"": device},
-        trust_remote_code=True
-    )
+    # Flag: switch between 16-bit and quantized loading
+    use_quantized = False  # Set True for 4-bit/8-bit quant, False for fp16 full precision
+
+    if use_quantized:
+        # 4-bit quant config (using bnb)
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        )
+        model_kwargs = {
+            "quantization_config": bnb_config,
+            "device_map": {"": device},
+            "trust_remote_code": True,
+        }
+    else:
+        # Full 16-bit fp16 loading
+        model_kwargs = {
+            "torch_dtype": torch.float16,
+            "device_map": {"": device},
+            "trust_remote_code": True,
+        }
+
+    base_model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs)
+
     base_model.gradient_checkpointing_enable()
     base_model.enable_input_require_grads()
 
@@ -148,15 +168,16 @@ def save_training_metadata(path, batch_size, end_sample_index, num_epochs, learn
 
 
 def main():
-    model_id = "D:/AI/models/Qwen3-0.6B-Base"  # Adjust as needed
-    lora_adapter_path = "D:/AI/models/Qwen3-0.6B-LoRA-Alpaca"
-    alpaca_json_path = "D:/AI/data/alpaca.json"
+    model_id = "./Qwen3-8B-Base/models--Qwen--Qwen3-8B-Base/snapshots/49e3418fbbbca6ecbdf9608b4d22e5a407081db4"  # Adjust as needed
+    lora_adapter_path = "./Qwen3-0.6B-LoRA-Alpaca"
+    alpaca_json_path = "./alpaca.json"
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     batch_size = 4
     num_epochs = 3
+    
     learning_rate = 3e-5
-    data_limit = 100
+    data_limit = 10
     start = 0
 
     lora_config = LoraConfig(
