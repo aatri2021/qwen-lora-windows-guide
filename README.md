@@ -32,7 +32,7 @@ Download trainllmlora.py (in this repo - see link above) and update the file pat
 
  model_id = "D:/AI/models/Qwen3-0.6B-Base"  # Adjust as needed
  
- lora_adapter_path = "D:/AI/models/Qwen3-0.6B-LoRA-Alpaca"
+ lora_adapter_path = "D:/AI/models/Qwen3-0.6B-LoRA-Alpaca" (this is wher your newly created lora will be placed)
  
  alpaca_json_path = "D:/AI/data/alpaca.json"
 
