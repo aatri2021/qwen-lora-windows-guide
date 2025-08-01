@@ -25,7 +25,13 @@ def load_alpaca_data(filepath, start, limit=None):
         input_text = entry["input"].strip()
         output = entry["output"].strip()
 
-        prompt = f"### Instruction:\n{instruction}\n\n### Input:\n{input_text}\n\n### Response:"
+        user_prompt = instruction if input_text == "" else f"{instruction}\n{input_text}"
+    
+        prompt = (
+            "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n"
+            f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
+            "<|im_start|>assistant\n"
+        )
         return prompt, output
 
 
@@ -39,9 +45,8 @@ def load_model_and_tokenizer(model_id, device, lora_adapter_path, lora_config):
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
     # Make sure padding is valid for Qwen
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = "right"
+    tokenizer.pad_token = tokenizer.eos_token
+
 
     # Flag: switch between 16-bit and quantized loading
     use_quantized = False  # Set True for 4-bit/8-bit quant, False for fp16 full precision
@@ -107,9 +112,9 @@ def train_loop(model, tokenizer, training_data, device, batch_size, num_epochs, 
             batch = training_data[i:i + batch_size]
             optimizer.zero_grad()
 
-            prompts = [f"{p}\nAnswer:" for p, _ in batch]
+            prompts = [p for p, _ in batch]
             answers = [a for _, a in batch]
-            full_texts = [f"{p}\n{a}" for p, a in zip(prompts, answers)]
+            full_texts = [f"{p}{a}<|im_end|>" for p, a in zip(prompts, answers)]
 
             encodings = tokenizer(
                 full_texts,
@@ -168,7 +173,7 @@ def save_training_metadata(path, batch_size, end_sample_index, num_epochs, learn
 
 
 def main():
-    model_id = "./Qwen3-8B-Base/models--Qwen--Qwen3-8B-Base/snapshots/49e3418fbbbca6ecbdf9608b4d22e5a407081db4"  # Adjust as needed
+    model_id = "./Qwen3-0.6B-Base/models--Qwen--Qwen3-0.6B-Base/snapshots/da87bfb608c14b7cf20ba1ce41287e8de496c0cd"  # Adjust as needed
     lora_adapter_path = "./Qwen3-0.6B-LoRA-Alpaca"
     alpaca_json_path = "./alpaca.json"
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
